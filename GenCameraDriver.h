@@ -15,7 +15,6 @@
 #include <thread>
 #include <memory>
 			
-			
 // opencv
 #include <opencv2/opencv.hpp>
 
@@ -27,6 +26,8 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
+
+#define USING_SHARE_MEMORY
 
 namespace cam {
 
@@ -390,10 +391,16 @@ namespace cam {
 		@brief set capturing mode
 		@param GenCamCaptureMode captureMode: capture mode
 		@param int size: buffer size
+		@param std::string mapName: if USING_SHARE_MEMORY, need config file 
+			to init share memory
 		@return int
 		*/
 		virtual int setCaptureMode(GenCamCaptureMode captureMode,
-			int bufferSize) = 0;
+			int bufferSize
+#ifdef USING_SHARE_MEMORY
+			, std::string mapName
+#endif
+			) = 0;
 
 		/**
 		@brief wait for recording threads to finish

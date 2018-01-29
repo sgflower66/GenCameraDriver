@@ -204,10 +204,16 @@ namespace cam {
 	@brief set capturing mode
 	@param GenCamCaptureMode captureMode: capture mode
 	@param int size: buffer size
+	@param std::string mapName: if USING_SHARE_MEMORY, need config file
+		to init share memory
 	@return
 	*/
 	int RealCamera::setCaptureMode(GenCamCaptureMode captureMode,
-		int bufferSize) {
+		int bufferSize
+#ifdef USING_SHARE_MEMORY
+		, std::string mapName
+#endif
+		) {
 		// get camera info
 		this->getCamInfos(camInfos);
 		// init capture buffer
@@ -215,6 +221,9 @@ namespace cam {
 		this->bufferSize = bufferSize;
 		if (captureMode == cam::GenCamCaptureMode::Continous ||
 			captureMode == cam::GenCamCaptureMode::ContinousTrigger) {
+#ifdef USING_SHARE_MEMORY
+			memoryPtr->init(mapName);
+#endif
 			// create buffer for raw buffer type
 			if (this->bufferType == GenCamBufferType::Raw) {
 				// resize vector
@@ -229,7 +238,16 @@ namespace cam {
 					height = camInfos[i].height;
 					size_t length = width * height * sizeof(uchar);
 					for (size_t j = 0; j < bufferSize; j++) {
+#ifdef USING_SHARE_MEMORY
+						char* data_;	int* type_;	size_t* length_; size_t* maxlength_;
+						memoryPtr->getImageDataPointer(j, i, data_, type_, length_, maxlength_);
+						this->bufferImgs[j][i].data = data_;
+						*length_ = length;
+						*maxlength_ = length;
+						*type_ = 0;
+#else
 						this->bufferImgs[j][i].data = new char[length];
+#endif
 						this->bufferImgs[j][i].length = length;
 						this->bufferImgs[j][i].maxLength = length;
 						this->bufferImgs[j][i].type = this->bufferType;
@@ -248,6 +266,16 @@ namespace cam {
 					// pre-calculate compressed jpeg data size
 					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * 0.5);
 					for (size_t j = 0; j < bufferSize; j++) {
+#ifdef USING_SHARE_MEMORY
+						char* data_;	int* type_;	size_t* length_; size_t* maxlength_;
+						memoryPtr->getImageDataPointer(j, i, data_, type_, length_, maxlength_);
+						this->bufferImgs[j][i].data = data_;
+						*length_ = maxLength;
+						*maxlength_ = maxLength;
+						*type_ = 1;
+#else
+						this->bufferImgs[j][i].data = new char[length];
+#endif
 						this->bufferImgs[j][i].data = new char[maxLength];
 						this->bufferImgs[j][i].maxLength = maxLength;
 						this->bufferImgs[j][i].type = this->bufferType;

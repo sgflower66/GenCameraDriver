@@ -10,13 +10,19 @@ directly
 #define __GENERIC_CAMERA_DRIVER_REAL_H__
 
 #include "GenCameraDriver.h"
-
-// cuda npp JPEG coder
 #include "NPPJpegCoder.h"
+
+#ifdef USING_SHARE_MEMORY
+#include "data_type.h"
+#endif
 
 namespace cam {
     class RealCamera : public GenCamera {
         protected:
+#ifdef USING_SHARE_MEMORY
+			std::shared_ptr<share::MemoryBuffer> const memoryPtr =
+				std::make_shared<share::MemoryBuffer>();
+#endif
             // buffers to save cuda memory pointer
 			std::vector<Imagedata> bufferImgs_data_ptr;
 			std::vector<cv::Mat> bufferImgs_host;
@@ -100,10 +106,16 @@ namespace cam {
 			@brief set capturing mode
 			@param GenCamCaptureMode captureMode: capture mode
 			@param int size: buffer size
+			@param std::string mapName: if USING_SHARE_MEMORY, need config file
+				to init share memory
 			@return int
 			*/
 			int setCaptureMode(GenCamCaptureMode captureMode,
-				int bufferSize);
+				int bufferSize
+#ifdef USING_SHARE_MEMORY
+				, std::string mapName
+#endif
+				);
 
 		    /**
             @brief wait for recording threads to finish
