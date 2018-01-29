@@ -164,6 +164,11 @@ namespace cam {
 					&bufferImgs[thBufferInds[camInd]][camInd].length,
 					bufferImgs[thBufferInds[camInd]][camInd].maxLength,
 					stream);
+#ifdef USING_SHARE_MEMORY
+				char* data_;	int* type_;	size_t* length_; size_t* maxlength_;
+				memoryPtr->getImageDataPointer(thBufferInds[camInd], camInd, data_, type_, length_, maxlength_);
+				*length_ = bufferImgs[thBufferInds[camInd]][camInd].length;
+#endif
 				cudaStreamSynchronize(stream);
 				// end time
 				end_time = clock();
@@ -267,7 +272,7 @@ namespace cam {
 					size_t maxLength = static_cast<size_t>(camInfos[i].width * camInfos[i].height * 0.5);
 					for (size_t j = 0; j < bufferSize; j++) {
 #ifdef USING_SHARE_MEMORY
-						char* data_;	int* type_;	size_t* length_; size_t* maxlength_;
+						char* data_; int* type_; size_t* length_; size_t* maxlength_;
 						memoryPtr->getImageDataPointer(j, i, data_, type_, length_, maxlength_);
 						this->bufferImgs[j][i].data = data_;
 						*length_ = maxLength;
